@@ -8,3 +8,4 @@ research/
 .install.json
 dist/
 .public_release/
+node_modules/

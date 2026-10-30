@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "dsh-plugin-live-shot",
-    "description": "Take a region screenshot and drop it straight into the composer draft."
+    "title": "Image annotator",
+    "description": "Mark up a screenshot already in the composer (box, arrow, pen, mosaic, text), or annotate a new one and put it back. Entirely browser-side, no desktop runtime."
   }
 }
