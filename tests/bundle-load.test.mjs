@@ -202,7 +202,31 @@ assert.ok(
   'setPointerCapture must be wrapped in a try/catch'
 );
 
+// The close control must sit in the toolbar's flow, never float over it.
+//
+// It used to be `position: absolute; top: 8px; right: 8px`, which landed it on
+// top of the toolbar's last action: the user reported "the close X overlaps the
+// Choose file button". A floating control over a flex row of actions is the
+// cause, so the stylesheet is asserted rather than a rendered geometry.
+const styleSource = readFileSync(clientPath, 'utf8');
+const closeRule = /'\.dsa-close\{([^']*)\}'/.exec(styleSource);
+assert.ok(closeRule, 'the .dsa-close rule must exist');
+const closeDeclarations = closeRule[1];
+assert.ok(
+  !/position:\s*absolute/.test(closeDeclarations),
+  'the close control must not be absolutely positioned over the toolbar'
+);
+assert.ok(
+  /background:\s*var\(--dsw-alias-state-error-primary\)/.test(closeDeclarations),
+  'the close control must use the theme error color, which has contrast in both modes'
+);
+assert.ok(
+  /color:\s*var\(--dsw-alias-label-primary-foreground\)/.test(closeDeclarations),
+  'the close glyph must use the paired foreground color'
+);
+
 console.log('client bundle registers, materializes, and mounts the composer seat.');
 console.log(`seat: ${seat.name} / ${seat.id} (order ${seat.order})`);
 console.log(`dictionary keys checked: ${required.length}`);
 console.log('pointer capture failure is contained.');
+console.log('the close control stays in the toolbar flow with theme-aware contrast.');

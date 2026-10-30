@@ -312,7 +312,9 @@ window.__ModuleLoader__.load({
       '.dsa-thumb:hover{border-color:var(--dsw-alias-brand-primary)}',
       '.dsa-thumb img{display:block;width:100%;height:84px;object-fit:cover;background:var(--dsw-alias-bg-layer-1)}',
       '.dsa-thumbName{padding:4px 6px;font-size:11px;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}',
-      '.dsa-close{position:absolute;top:8px;right:8px;z-index:3;width:26px;height:26px;border:0;border-radius:6px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer}'
+      '.dsa-close{display:inline-flex;align-items:center;justify-content:center;flex:none;width:26px;height:26px;padding:0;border:0;border-radius:var(--dsw-radius-sm,6px);background:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-label-primary-foreground);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.35)}',
+      '.dsa-close:hover{filter:brightness(1.08)}',
+      '.dsa-close:focus-visible{outline:2px solid var(--dsw-alias-state-error-primary);outline-offset:2px}'
     ].join('');
 
     /** Install this package's stylesheet once, and remove it when the plugin unloads. */
@@ -775,7 +777,7 @@ window.__ModuleLoader__.load({
 
     /** The plugin's panel: pick a composer image, or start a new one. */
     function AnnotatorPanel(props) {
-      const { t, sessionId, inputActions, getConversation, attachments } = props;
+      const { t, sessionId, inputActions, getConversation, attachments, onClose } = props;
       const [source, setSource] = useState(null);
       const fileRef = useRef(null);
 
@@ -925,7 +927,22 @@ window.__ModuleLoader__.load({
               }
               void openBlob(file, file.name);
             }
-          })
+          }),
+          // The close control lives in the toolbar's own flow, not floating over
+          // it: an absolutely positioned button landed on the last toolbar
+          // action and made it unclickable.
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'dsa-close',
+              'aria-label': t('action.cancel'),
+              title: t('action.cancel'),
+              onClick: onClose
+            },
+            h('svg', { width: 13, height: 13, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': 'true' },
+              h('path', { d: 'M4 4l8 8M12 4l-8 8', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' }))
+          )
         ),
         h(
           'div',
@@ -1023,19 +1040,13 @@ window.__ModuleLoader__.load({
                     overflow: 'hidden'
                   }
                 },
-                h('button', {
-                  type: 'button',
-                  className: 'dsa-close',
-                  'aria-label': t('action.cancel'),
-                  title: t('action.cancel'),
-                  onClick: () => setOpen(false)
-                }, '✕'),
                 h(AnnotatorPanel, {
                   t,
                   sessionId,
                   inputActions,
                   getConversation,
-                  attachments
+                  attachments,
+                  onClose: () => setOpen(false)
                 })
               )
             )
