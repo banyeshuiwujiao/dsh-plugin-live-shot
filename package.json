@@ -1,78 +1,48 @@
 {
   "name": "dsh-plugin-live-shot",
-  "version": "0.7.0-beta.6",
+  "version": "0.8.0",
   "license": "MIT",
-  "author": "TangerineSplendor",
+  "author": "banyeshuiwujiao",
+  "contributors": [
+    "TangerineSplendor (upstream author)"
+  ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TangerineSplendor/dsh-plugin-live-shot.git"
+    "url": "git+https://github.com/banyeshuiwujiao/dsh-plugin-live-shot.git"
   },
-  "homepage": "https://github.com/TangerineSplendor/dsh-plugin-live-shot#readme",
-  "bugs": {
-    "url": "https://github.com/TangerineSplendor/dsh-plugin-live-shot/issues"
-  },
+  "homepage": "https://github.com/banyeshuiwujiao/dsh-plugin-live-shot#readme",
+  "bugs": "https://github.com/banyeshuiwujiao/dsh-plugin-live-shot/issues",
   "keywords": [
     "dsh-plugin",
     "deepseek-harness",
     "screenshot",
-    "windows",
-    "annotation"
+    "annotation",
+    "image"
   ],
   "publishConfig": {
     "access": "public",
-    "registry": "https://registry.npmjs.org/",
-    "tag": "beta"
+    "registry": "https://registry.npmjs.org/"
   },
   "bin": {
     "dsh-shot": "./bin/dsh-shot.cjs"
   },
-  "os": [
-    "win32"
-  ],
-  "cpu": [
-    "x64"
-  ],
   "type": "module",
-  "description": "Screenshot editor that lands the crop straight in the composer draft.",
+  "description": "Annotate images in the DSH composer: mark up a screenshot already in the draft, or capture, paste, and annotate a new one. Browser-side, no desktop runtime.",
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
+    "./annotator": "./annotator.js",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg"
   },
   "files": [
     "index.js",
-    "helper.js",
-    "ensure_runtime.js",
-    "prepare_runtime.ps1",
-    "helper_main.cjs",
-    "electron_controller.js",
-    "selection.js",
-    "settings.js",
-    "runtime_paths.cjs",
     "client.js",
-    "worker.js",
-    "picker.js",
-    "native_picker.cs",
-    "native_picker.ps1",
-    "escape_bridge.cs",
-    "escape_bridge.ps1",
-    "capture_worker.ps1",
-    "overlay_preload.cjs",
-    "overlay.html",
-    "overlay.css",
-    "overlay.js",
+    "annotator.js",
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "bin/*.cjs",
-    "install.ps1",
-    "install_common.ps1",
-    "install.bat",
-    "uninstall.ps1",
-    "uninstall.bat",
-    "portable_readme.md",
-    "THIRD_PARTY_NOTICES.md",
+    "README.md",
     "LICENSE"
   ],
   "dsh": {
@@ -83,8 +53,12 @@
       "platform": "web",
       "immediately": true,
       "inject": [
+        "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-client-ui-conversation"
       ]
     }
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

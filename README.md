@@ -1,90 +1,116 @@
 # dsh-plugin-live-shot
 
-[![DSH Market 已收录](https://raw.githubusercontent.com/2BingLing/dsh-market/master/assets/readme/badge-listed-zh.svg)](https://dsh.market/)
+DeepSeek Harness 的**图片标注**插件：给输入框里已有的截图加记号，或者新建一张标注后再放回输入框。
 
-Windows screenshot and annotation plugin for DeepSeek Harness. Select the **live desktop**, capture only the selected region after releasing the mouse, then insert the image directly into the conversation draft.
+> 本仓库 fork 自 [TangerineSplendor/dsh-plugin-live-shot](https://github.com/TangerineSplendor/dsh-plugin-live-shot)（MIT）。
+> 原版是 Windows 桌面版插件，靠 Electron 助手进程截取实时桌面并在助手窗口里画标注。
+> **本 fork 把它整个搬进浏览器**：DSH 的 web profile 是纯 Node 宿主，没有 Electron，
+> 所以截屏与标注都改由页面里的 canvas 完成，插件不再需要任何桌面运行时。
 
-Windows 实时桌面截图插件：全局热键、窗口识别、选区调整、标注，以及直接插入 DSH 输入框。
+## 它做什么
 
-统一名称为 **dsh-plugin-live-shot**，用于 GitHub、DSH Market、npm 和插件显示。此前的 DSH Shot / dsh-screenshot 均指本插件；`dsh-shot` 继续作为安装/卸载命令简称，现有配置和数据目录保持兼容。
+- **标注输入框里已有的图**：点开插件 → 列出输入框草稿里的图片 → 点一张 → 在标注器里画 → 「替换原图」。
+- **新建一张**：截屏（浏览器屏幕捕获 API）、从剪贴板粘贴、或者从文件里选一张，标注后「加入输入框」。
+- **工具**：矩形、椭圆、箭头、画笔、马赛克、文字；可调颜色与粗细，可撤销、可清空、可复制到剪贴板。
 
-[Download Windows ZIP 0.7.0-beta.6](https://github.com/TangerineSplendor/dsh-plugin-live-shot/releases/download/v0.7.0-beta.6/dsh-plugin-live-shot-0.7.0-beta.6-windows-x64.zip) · [Release notes](https://github.com/TangerineSplendor/dsh-plugin-live-shot/releases/tag/v0.7.0-beta.6) · [DSH Market 已确认收录](https://github.com/2BingLing/dsh-market/issues/283#issuecomment-6379257821)
+标注以**图像像素坐标**保存，所以缩放画布不会让记号跑位。
 
-**当前测试版为 `0.7.0-beta.6`。此版统一公开名称和下载包命名，截图行为沿用 beta.5；游戏预框选 Esc 取消仍有已知问题，暂用右键退出。旧 beta.2 的相机/插图安装缺陷已在此前版本修复，该旧版已下架。**
+## 与原版的差异
 
-**Beta: 0.7.0-beta.6. Windows 10/11 x64, official DSH desktop only.** Tested on the developer's machine with isolated profiles; compatibility on other machines still needs feedback. macOS, Linux, browser-only DSH and remote Hosts are unsupported.
+| | 原版（0.7.0-beta.x） | 本 fork（0.8.0） |
+|---|---|---|
+| 运行时 | 需要 Windows 桌面版 Electron + 本地辅助进程 | 纯浏览器，DSH web / 桌面版都能用 |
+| 截图来源 | 实时桌面（自绘选框、窗口吸附） | 浏览器屏幕捕获、剪贴板、文件 |
+| 标注对象 | 只有刚截下来的那一张 | **输入框里已有的任意一张**，或新图 |
+| 宿主侧 | `index.js` 起一个 `OverlayHelper` 守护进程 | `index.js` 是空的 |
+| 文件数 | ~50 个（大量 `.cs` / `.ps1` / Electron 胶水） | 6 个 |
 
-## Install / 安装
+保留下来的：矩形/椭圆/箭头/画笔/马赛克/文字这六种绘制语义（与原版逐一对齐）、标注→插回输入框的交互主线、以及 MIT 许可与上游署名。
 
-Install and open the official Windows DSH desktop app at least once. Keep DSH running during setup so the installer can find its executable.
+## 安装
 
-**ZIP, no additional Node.js required:** download [dsh-plugin-live-shot-0.7.0-beta.6-windows-x64.zip](https://github.com/TangerineSplendor/dsh-plugin-live-shot/releases/download/v0.7.0-beta.6/dsh-plugin-live-shot-0.7.0-beta.6-windows-x64.zip), extract it completely and run `install.bat`. The installer must print `Installed 0.7.0-beta.6`. If prompted, select your installed `DeepSeek Harness.exe`. Quit DSH completely from its tray menu and reopen it. Do not reuse a beta.2 ZIP or its extracted installer.
+在 profile 目录（`~/.dsh/profiles/web/`）的 `package.json` 里加两处：
 
-**npm, for users who already have Node.js:**
-
-```powershell
-npx --yes --package=dsh-plugin-live-shot@0.7.0-beta.6 dsh-shot install
+```json
+{
+  "dependencies": {
+    "dsh-plugin-live-shot": "link:<绝对路径>/plugins/dsh-plugin-live-shot"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": ["dsh-plugin-live-shot"]
+    }
+  }
+}
 ```
 
-Alternatively, download the Release TGZ and use `npx --yes --package=./dsh-plugin-live-shot-0.7.0-beta.6.tgz dsh-shot install` from its folder. Use `dsh-shot install -DshExe "C:\Apps\DeepSeek Harness\DeepSeek Harness.exe"` if automatic detection fails. `-ProfileDir`, `-DshHome` and `-DataDir` support non-default installations. Then fully quit and reopen DSH.
+然后 `pnpm install`，**重启宿主**。宿主侧只在启动时加载 bundle，刷新页面不够。
 
-ZIP, npm and standard bundle installations all use `dsh-plugin-live-shot` as the installed directory, Loader entry, manifest name and Client module ID. The installer migrates the old `@local/dsh-shot` entry while preserving its settings and custom data directory. Beta.2 ZIP installations had a name mismatch that prevented the camera and image delivery from loading; upgrade with this installer and completely restart DSH. Standard bundle installations prepare the local runtime on first startup; if automatic discovery fails, use the explicit installer instead.
+## 实现要点
 
-安装无需管理员权限。ZIP 安装不需要额外 Node 或网络下载；npm 方式需要 Node 和网络获取插件包。辅助运行时均从你本机的 DSH 复制，首次约需数百 MB 空间，不修改 DSH 程序目录。DSH 升级后重新运行安装器。
+### 接线到运行时
 
-## Use / 使用
+插件是**纯前端 bundle**：宿主半侧 `index.js` 什么都没有，只为在插件清单里占一行（带自己的标题、描述、图标）。
 
-- Click the camera in the composer, or press **Ctrl+Shift+X** from any program. The desktop remains live while selecting; no full-screen preview is captured.
-- Hover a window and click to select it, or drag a custom region. After release, move the selection with **↔** or resize its eight handles. Releasing a changed selection captures the new region.
-- Rectangle, ellipse, arrow, pen, mosaic, text, undo and PNG save are available.
-- **Enter / double-click / Done** inserts into the active DSH composer. **Ctrl+C** copies only. **Right-click** cancels. Esc works in the editor; preselection Esc in games remains a known issue.
-- **隐藏 DSH** remembers whether to hide DSH during capture. **Shift+camera** inverts that choice for one capture. Completion or cancellation restores hidden windows.
-- **⚙** changes the global shortcut. A conflict or save failure preserves the previous binding.
+浏览器半侧 `client.js` 用 `window.__ModuleLoader__.load({ id, factory })` 注册一个工厂，
+工厂返回 `{ inject, apply }`。它挂在输入框左边的座位上：
 
-## Known issue in this beta / 本版已知问题
-
-游戏预框选阶段 Esc 可能无效，暂用右键退出；松手后的编辑器 Esc 已获本机反馈正常。⚙ 中新增手动启用的「管理员游戏兼容」试验入口，需要本人确认 Windows 提示，仅本次辅助进程运行有效。**完整插件实测仍未解决该 Esc 问题，不能将此入口视为已修复或保证有效。**普通截图和安装不请求管理员权限。编辑后移动/调整选区仍使用 Electron，游戏焦点行为尚待进一步验证。
-
-本机用户已确认 B 站视频框选期间恢复可见、游戏原生拖选可用；这不是所有游戏或所有机器的兼容性保证。
-
-## Restart acceptance / 重启后三步验收
-
-1. Use the camera and the global hotkey; select over a moving clock or video and confirm the desktop stays live.
-2. Select a window, adjust the region and add annotations; enable **隐藏 DSH**, cancel and confirm DSH returns.
-3. Verify Enter inserts, Ctrl+C copies only, and saved hotkey/hide preferences survive another complete restart.
-
-## Uninstall / 卸载
-
-For the explicit installer, run `uninstall.bat`, or:
-
-```powershell
-npx --yes --package=dsh-plugin-live-shot@0.7.0-beta.6 dsh-shot uninstall
+```js
+ctx.slots.inject('conversation.input.left', () => ctx.slots.register({
+  name: 'conversation.input.left',
+  id: 'dsh-shot',
+  order: 20,
+  locale: NS,
+  inject: () => ({ getConversation: () => ctx.get('conversation') })
+}, ShotButton))
 ```
 
-Then completely restart DSH. Default removal retains settings and local runtime. The optional `-RemoveData` also deletes the dedicated data directory, including images saved in its `captures` folder. For a non-default profile, pass the same `-ProfileDir` used to install. If installed as a standard DSH bundle, remove it through that bundle manager instead.
+`conversation.input.left` 是 session-scope 座位，标准 props 里带 `useInput`、`inputActions`、`sessionId`。
 
-Full path options and troubleshooting: [portable_readme.md](portable_readme.md).
+### 读写输入框里的附件
 
-## Limits and local access
+草稿里的图片由 Conversation 服务持有，插件通过标准的 `ctx.get('conversation')` 拿到它：
 
-One monitor per selection; no cross-monitor stitching or scrolling capture. Window detection covers top-level windows. Protected video and UAC secure desktops follow Windows restrictions. Capture occurs after hiding the overlay and waiting for composition, rather than promising the exact video frame at mouse release.
+- **读**：`conversation.resolveDraftAttachments(inputState.attachmentIds)` 拿到 `{ id, kind, file, previewUrl }` 列表。
+- **写**：`conversation.createDrafts(sessionId, files, true)` 造出新草稿，
+  再 `inputActions.addAttachments(drafts.map(d => d.id))` 挂到输入框上。
+  挂不上去时用 `conversation.releaseDraftAttachments(drafts)` 回滚，避免留下野草稿。
+- **替换**：先加新草稿，再 `inputActions.removeAttachment(oldId)` 把原图摘掉，标注结果就顶上了原位。
 
-The plugin registers a global hotkey, reads pointer/window geometry, captures the region you select, and writes the clipboard or a PNG only when requested. It uses an authenticated random-token loopback connection between its local processes. The dedicated Electron helper uses `--no-sandbox` and a local page with context isolation and a network-blocking CSP; it must not load remote pages. The plugin does not upload screenshots or read account keys.
+> `createDrafts` 的第三个参数 `uploadImages` 是必填的：普通会话传 `true`（图片走上传通道），
+> 子代理续写传 `false`（图片随 prompt 内联）。原版 moodboard-wall 只传了两个参数，
+> 那个位置等价于 `false`，普通会话下图片不会立刻上传——这里显式传 `true`。
 
-Composer delivery uses DSH's current paste/drop DOM behavior; version changes may require adaptation. Report DSH/Windows versions, monitor scaling, RDP use and the error message in [Issues](https://github.com/TangerineSplendor/dsh-plugin-live-shot/issues). Do not attach account settings or private screenshots.
+### 绘制引擎
 
-## Development
+引擎在 `annotator.js` 里是一个普通 ES 模块（便于单测），但**同一份实现内联在 `client.js` 里**。
+原因是插件的 `client.js` 是**原样服务的裸脚本**：拆成第二个文件需要包内的 chunk 路由
+（`client.<name>.js`，见 `dsh-client-modules` 的 chunk 规则），而那只由打包器产出。
+内联让这个插件保持「一个 `client.js` 就能跑」的形态。
 
-No npm dependencies or build step. Runtime files and machine-specific configuration are excluded from public artifacts. On Windows with Node:
+绘制模型沿用原版：一个**基础位图** + 一串**图元操作**，每次重放。
+操作存图像像素坐标，因此换分辨率时按比例缩放即可。
 
-```powershell
-node --experimental-vm-modules tests/host_test.mjs
-node tests/selection_settings_test.mjs
-node tests/client_install_test.mjs
-node tests/worker_test.mjs
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build_portable.ps1
-```
+### 截屏
 
-The worker test captures a small region locally without writing it to disk. Integration tests require an installed DSH and should use isolated profiles.
+用浏览器的 `getDisplayMedia`，取一帧画进 canvas 再转 PNG。
+这条路径不需要权限插件，也不需要本地进程；浏览器会自己弹「选择共享窗口」的提示。
 
-MIT license for this plugin. DSH/Electron binaries are not included; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). This is an independent community plugin.
+## 已知边界
+
+- **只标注图片草稿**：输入框里的非图片附件（PDF、txt）不进列表。
+- **替换是「先加后摘」**：标注结果在草稿里排到最后，摘掉原图后视觉上回到原位，但严格按 id 排序时顺序会变。
+- **SVG 会被当成图片草稿**，但标注器把它栅格化后输出 PNG。
+- **屏幕捕获要浏览器授权**，且部分环境（如某些内嵌 webview）没有 `getDisplayMedia`。
+- **中文界面**：界面文案走 `ctx.locale`，中英双语，跟随 DSH 当前语言。
+
+## 相关
+
+- 座位与 slots：`@deepseek-ai/dsh-client-ui-slots`
+- 输入框与草稿附件：`@deepseek-ai/dsh-client-ui-conversation`
+- 附件呈现：`@deepseek-ai/dsh-client-ui-attachment`
+- 同类思路参考：`dsh-moodboard-wall`（本机的灵感墙插件，也是纯前端 + 往输入框送图）
+
+## License
+
+MIT。上游作者 TangerineSplendor，本 fork 作者 banyeshuiwujiao。

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "dsh-plugin-live-shot",
-    "description": "框选屏幕区域，直接把截图放进输入框草稿，不用再复制粘贴。"
+    "title": "图片标注 / Image annotator",
+    "description": "给输入框里的截图加记号（框、箭头、画笔、马赛克、文字），或新建一张标注后放回输入框。纯浏览器端，无需桌面运行时。"
   }
 }
