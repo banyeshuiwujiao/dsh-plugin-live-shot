@@ -189,6 +189,20 @@ for (const key of required) {
   assert.ok(key in zh, `the zh dictionary is missing ${key}`);
 }
 
+// A stroke must survive a pointer capture that throws.
+//
+// `setPointerCapture` rejects a pointer id that is no longer active, which
+// happens for a synthetic event and for a pointer released between the event
+// and the handler. The call sits before the operation is recorded, so an
+// uncaught throw aborted the handler and the stroke was silently dropped.
+// The browser verification of 2026-10-30 found exactly this: the tool row
+// worked, but no mark was ever painted.
+assert.ok(
+  /try\s*\{\s*canvas\.setPointerCapture/.test(readFileSync(clientPath, 'utf8')),
+  'setPointerCapture must be wrapped in a try/catch'
+);
+
 console.log('client bundle registers, materializes, and mounts the composer seat.');
 console.log(`seat: ${seat.name} / ${seat.id} (order ${seat.order})`);
 console.log(`dictionary keys checked: ${required.length}`);
+console.log('pointer capture failure is contained.');

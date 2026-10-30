@@ -562,7 +562,12 @@ window.__ModuleLoader__.load({
           const canvas = canvasRef.current;
           if (canvas === null) return;
           event.preventDefault();
-          canvas.setPointerCapture?.(event.pointerId);
+          // Pointer capture keeps the stroke going when the pointer leaves the
+          // canvas. It throws when the id is no longer active (a synthetic
+          // event, or a pointer already released), and that exception would
+          // abort the handler before the operation is recorded — so it is
+          // swallowed deliberately.
+          try { canvas.setPointerCapture(event.pointerId); } catch { /* no capture, the stroke still tracks */ }
           const point = imagePoint(event);
           const box = canvas.getBoundingClientRect();
           const scale = box.width > 0 ? canvas.width / box.width : 1;
